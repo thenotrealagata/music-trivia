@@ -1,7 +1,7 @@
 <template>
   <div>
     <NavBar :profilePic="profilePic"></NavBar>
-    <h1 class="text-3xl font-bold underline">Music Trivia!!</h1>
+    <h1 className="text-3xl font-bold underline">Music Trivia!!</h1>
     <router-view></router-view>
   </div>
   
