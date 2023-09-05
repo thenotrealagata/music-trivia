@@ -1,13 +1,35 @@
 <template>
   <div>
-    <p>Are you ready to test your knowledge on the songs and artists you love the most?</p>
-    <button>Play</button>
-    <h2>...not ready yet?</h2>
-    <p>Here's some data about your most listened to tracks in the past year!</p>
-    <button v-if="isLoggedIn" @click="authoriseSpotify">But first, connect to Spotify!</button>
-    <div>
-        Your most listened songs this year are...
-        <!--<div v-for="favouriteSong in favouriteSongs" v-bind:key="favouriteSong.name">{{ favouriteSong.name }}</div>-->
+    <div className="hero min-h-screen" style="backgroundImage: url(https://images.unsplash.com/photo-1514747975201-4715db583da9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80)">
+      <div className="hero-overlay bg-opacity-60"></div>
+      <div className="hero-content text-center text-neutral-content">
+        <div className="max-w-md">
+          <h1 className="mb-5 text-5xl font-bold">hello hello!</h1>
+          <p className="mb-5">Are you ready to test your knowledge on the songs & artists you love the most?</p>
+          <router-link to="/play"><button className="btn btn-primary">Play</button></router-link>
+        </div>
+      </div>
+    </div>
+    <div class="container lg mx-auto px-20">
+      <h2 className="mb-5 text-4xl font-bold pt-5">...not ready yet?</h2>
+      <p>Here's some data about your most listened to tracks in the past year!</p>
+      <button className="absolute right-0 btn btn-success" v-if="isLoggedIn" @click="authoriseSpotify">But first, connect to Spotify!</button>
+      <div>
+          Your most listened songs in the last 6 months have been...
+          <div v-for="(favouriteSong, index) in favouriteSongs.items" v-bind:key="index">
+            <div className="card lg:card-side bg-base-100 shadow-xl my-4">
+              <figure><img className="pl-4" :src="favouriteSong.album.images[2].url" alt="Album"/></figure>
+              <div className="card-body">
+                <h2 className="card-title">{{favouriteSong.name}}</h2>
+                <p>by {{ getArtists(favouriteSong.artists)}} </p>
+                <!--<div className="card-actions justify-end">
+                  <button className="btn btn-primary">Listen</button>
+                </div>-->
+              </div>
+            </div>
+            <div className="px-5"></div>
+          </div>
+      </div>
     </div>
   </div>
 </template>
@@ -24,6 +46,14 @@ export default {
         authoriseSpotify() {
             handleLogin();
         },
+        getArtists(artists) {
+          let str = "";
+          artists.forEach(artist => { 
+            str += str == "" ? "" : ", ";
+            str += artist.name;
+          });
+          return str;
+        }
     },
     computed: {
         isLoggedIn() {
@@ -31,7 +61,7 @@ export default {
         },
     },
     async created() {
-        
+        this.favouriteSongs = await getTopTracks();
     }
 }
 
@@ -139,7 +169,7 @@ async function getTopTracks(accessToken){
   // Endpoint reference : https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
   accessToken = localStorage.getItem('access_token');
 
-  const response = await fetch('https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=5', {
+  const response = await fetch('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50', {
     headers: {
       Authorization: 'Bearer ' + accessToken
     }
