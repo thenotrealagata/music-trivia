@@ -1,1 +1,3 @@
 # music-trivia
+This is a simple frontend project using Spotify API. It shows the user's favorite tracks, artist and more interesting data about their listening habits. Then the user can play a game in which they have to guess which one of their favorite songs is more popular, according to Spotify's API.
+(Currently this game is a bit biased - as the API doesn't provide listening numbers, the game is based on the track's "popularity", a number determined by their algorithm.)
