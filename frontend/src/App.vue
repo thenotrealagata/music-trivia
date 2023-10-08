@@ -3,11 +3,11 @@
     <NavBar :profilePic="profilePic"></NavBar>
     <router-view></router-view>
   </div>
-  
 </template>
 
 <script>
 import NavBar from '@/components/NavBar.vue';
+import { getProfile } from "@/scripts.js";
 
 export default {
   name: 'App',
@@ -29,24 +29,6 @@ export default {
       });
   }
 }
-
-async function getProfile(accessToken) {
-    console.log('access token: ' + localStorage.getItem('access_token'));
-    accessToken = localStorage.getItem('access_token');
-
-    const response = await fetch('https://api.spotify.com/v1/me', {
-      headers: {
-        Authorization: 'Bearer ' + accessToken
-      }
-    });
-
-    const data = await response.json();
-
-    console.log(data);
-    return data;
-}
-
-getProfile();
 </script>
 
 <style>

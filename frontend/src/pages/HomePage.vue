@@ -11,35 +11,73 @@
       </div>
     </div>
     <div class="container lg mx-auto px-20">
-      <h2 className="mb-5 text-4xl font-bold pt-5">...not ready yet?</h2>
-      <p>Here's some data about your most listened to tracks in the past year!</p>
-      <button className="absolute right-0 btn btn-success" v-if="isLoggedIn" @click="authoriseSpotify">But first, connect to Spotify!</button>
+      <h2 className="my-5 text-4xl font-bold text-center">...not ready yet?</h2>
+      <p>Here's some data about your favourite tracks in the last 6 months!</p>
+      <h3 className="my-3 text-3xl font-bold text-center">Your statistics</h3>
+      <div v-if="isLoggedIn" className="stats shadow">
+  
+        <div className="stat">
+          <div className="stat-figure text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+          </div>
+          <div className="stat-title">Average track length</div>
+          <div className="stat-value text-primary">{{ getAvgTrackLength() }} mins</div>
+        </div>
+        
+        <div className="stat">
+          <div className="stat-figure text-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+          <div className="stat-title">Most popular song</div>
+          <div className="stat-value text-secondary">{{ getName(getMostPopular()) }}</div>
+        </div>
+        
+        <div className="stat">
+          <div className="stat-figure text-secondary">
+            <div className="avatar">
+              <div className="w-16 rounded-full">
+                <img :src="favouriteArtist.items[0].images[2].url" />
+              </div>
+            </div>
+          </div>
+          <div className="stat-value">{{ getName(favouriteArtist.items[0]) }}</div>
+          <div className="stat-title">Favourite artist</div>
+        </div>
+        
+      </div>
+      
       <div>
-          Your most listened songs in the last 6 months have been...
+          These are the songs we're going to quiz you on, so you better check them out! **drumroll** Your favourite songs in the last 6 months have been...
           <div v-for="(favouriteSong, index) in favouriteSongs.items" v-bind:key="index">
             <div className="card lg:card-side bg-base-100 shadow-xl my-4">
               <figure><img className="pl-4" :src="favouriteSong.album.images[2].url" alt="Album"/></figure>
               <div className="card-body">
-                <h2 className="card-title">{{favouriteSong.name}}</h2>
+                <h2 className="card-title">{{ getName(favouriteSong) }}</h2>
                 <p>by {{ getArtists(favouriteSong.artists)}} </p>
-                <!--<div className="card-actions justify-end">
-                  <button className="btn btn-primary">Listen</button>
-                </div>-->
               </div>
             </div>
             <div className="px-5"></div>
           </div>
       </div>
+      <button className="absolute right-0 btn btn-success" v-if="isLoggedIn" @click="authoriseSpotify">But first, connect to Spotify!</button>
     </div>
   </div>
 </template>
 
 <script>
+import { getTopTracks, getFavArtist } from "@/scripts.js";
+
 export default {
     name: "HomePage",
     data() {
       return {
-        favouriteSongs: [],
+        favouriteArtist: {
+          items: [{ name: "", images: [{}, {}, { url: "" }]}],
+        },
+        avgTrackLength: 0,
+        favouriteSongs: {
+          items: [],
+        },
       }
     },
     methods: {
@@ -50,10 +88,34 @@ export default {
           let str = "";
           artists.forEach(artist => { 
             str += str == "" ? "" : ", ";
-            str += artist.name;
+            str += artist?.name;
           });
           return str;
-        }
+        },
+        getAvgTrackLength() {
+          if (this.favouriteSongs.items == undefined) return 0;
+          let length = 0;
+          const n = this.favouriteSongs.items.length;
+          this.favouriteSongs.items.forEach(track => {
+            length += track.duration_ms;
+          });
+          return Math.round(length / 10 / n / 60) / 100;
+        },
+        getMostPopular() {
+          if (this.favouriteSongs.items == undefined) return 0;
+          let popular;
+          let score = 0;
+          this.favouriteSongs.items.forEach(track => {
+            if (track.popularity > score) {
+              popular = track;
+              score = track.popularity;
+            }
+          });
+          return popular;
+        },
+        getName(track) {
+          return track?.name;
+        },
     },
     computed: {
         isLoggedIn() {
@@ -62,6 +124,7 @@ export default {
     },
     async created() {
         this.favouriteSongs = await getTopTracks();
+        this.favouriteArtist = await getFavArtist();
     }
 }
 
@@ -147,41 +210,6 @@ fetch('https://accounts.spotify.com/api/token', {
 }).catch(error => {
     console.error('Error:', error);
 });
-
-// Example function: access user profile (name, images, id, country, ...)
-async function getProfile(accessToken) {
-    accessToken = localStorage.getItem('access_token');
-
-    const response = await fetch('https://api.spotify.com/v1/me', {
-      headers: {
-        Authorization: 'Bearer ' + accessToken
-      }
-    });
-
-    const data = await response.json();
-
-    return data;
-}
-
-getProfile();
-
-async function getTopTracks(accessToken){
-  // Endpoint reference : https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
-  accessToken = localStorage.getItem('access_token');
-
-  const response = await fetch('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50', {
-    headers: {
-      Authorization: 'Bearer ' + accessToken
-    }
-  });
-
-  const data = await response.json();
-  console.log(data);
-
-  return data;
-}
-
-getTopTracks();
 </script>
 
 <style>
